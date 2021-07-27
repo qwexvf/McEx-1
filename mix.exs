@@ -9,9 +9,9 @@ defmodule McEx.Mixfile do
       build_embedded: Mix.env == :prod,
       start_permanent: Mix.env == :prod,
       #compilers: [:rustler] ++ Mix.compilers,
-      deps: deps,
+      deps: deps(),
       test_coverage: [tool: ExCoveralls],
-      preferred_cli_env: ["coveralls": :test, "coveralls.detail": :test, "coveralls.post": :test, "coveralls.html": :test],
+      preferred_cli_env: [coveralls: :test, "coveralls.detail": :test, "coveralls.post": :test, "coveralls.html": :test],
       rustler_crates: []]
   end
 
@@ -19,8 +19,10 @@ defmodule McEx.Mixfile do
   #
   # Type `mix help compile.app` for more information
   def application do
-    [applications: [:logger, :gproc],
-      mod: {McEx, []}]
+    [
+      extra_applications: [:logger, :gproc],
+      mod: {McEx, []}
+    ]
   end
 
   # Dependencies can be Hex packages:
@@ -34,7 +36,7 @@ defmodule McEx.Mixfile do
   # Type `mix help deps` for more examples and options
   defp deps do
     [
-      {:poison, "~> 2.1.0"},
+      {:jason, "~> 1.2"},
       {:gproc, github: "uwiger/gproc"}, #"~> 0.5.0"},
       {:uuid, "~> 1.1"},
       {:mc_chunk, github: "McEx/McChunk"},

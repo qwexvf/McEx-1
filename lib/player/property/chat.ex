@@ -22,7 +22,7 @@ defmodule McEx.Player.Property.Chat do
 
     %Server.Play.Chat{
       position: 0,
-      message: Poison.encode!(chat_message)}
+      message: Jason.encode!(chat_message)}
     |> write_client_packet(state)
 
     state

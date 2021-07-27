@@ -106,7 +106,7 @@ defmodule McEx.Player.Property.Windows do
     %Server.Play.OpenWindow{
       window_id: window_id,
       inventory_type: Map.fetch!(@window_atom_names, type),
-      window_title: Poison.encode!(%{text: title}),
+      window_title: Jason.encode!(%{text: title}),
       slot_count: slot_count}
     |> write_client_packet(state)
 
