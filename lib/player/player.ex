@@ -19,7 +19,7 @@ defmodule McEx.Player do
   def client_packet(pid, packet) do
     message = {:entity_msg, :client_packet, packet}
     send pid, message
-    #GenServer.cast(pid, message)
+    # GenServer.cast(pid, message)
   end
 
   def player_eid(server) do
@@ -90,6 +90,10 @@ defmodule McEx.Player do
   end
 
   def handle_call(:get_entity_id, _from, state) do
+    {:reply, state.eid, state}
+  end
+
+  def handle_cast(:update_xyz, _from, state) do
     {:reply, state.eid, state}
   end
 

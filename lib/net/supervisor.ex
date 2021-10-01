@@ -9,7 +9,7 @@ defmodule McEx.Net.Supervisor do
     children = [
       supervisor(McEx.Net.ConnectionSupervisor,
                  [[name: McEx.Net.ConnectionSupervisor]]),
-      worker(Task, [fn -> acceptor end])
+      worker(Task, [fn -> acceptor() end])
     ]
 
     options = [strategy: :one_for_one]
@@ -19,8 +19,8 @@ defmodule McEx.Net.Supervisor do
 
   def acceptor do
     McProtocol.Acceptor.SimpleAcceptor.accept(
-      25565,
-      fn socket ->
+      25568,
+      fn(socket) ->
         McEx.Net.ConnectionSupervisor.serve_socket(
           McEx.Net.ConnectionSupervisor, socket)
       end,
@@ -29,5 +29,4 @@ defmodule McEx.Net.Supervisor do
       end
     )
   end
-
 end

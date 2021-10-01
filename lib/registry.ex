@@ -62,7 +62,7 @@ defmodule McEx.Registry do
   end
 
   def unreg_chunk_listener(world_id, pos), do:
-  :gproc.unregister_name(chunk_listener_key(world_id, pos))
+  :gproc.unreg(chunk_listener_key(world_id, pos))
 
   def chunk_listeners_send(world_id, pos, message), do:
   :gproc.send(chunk_listener_key(world_id, pos), message)
@@ -111,12 +111,14 @@ defmodule McEx.Registry do
       pids ->
         Enum.each(pids, fn pid ->
           IO.inspect pid
-          Process.exit(pid, :normal)
+          # Process.exit(pid, :normal)
         end)
     end
   end
 
-  def shard_member_send(world_id, pos, message), do:
-  :gproc.send(shard_member_key(world_id, pos), message)
+  def shard_member_send(world_id, pos, message) do
+    IO.inspect shard_member_key(world_id, pos)
+    :gproc.send(shard_member_key(world_id, pos), message)
+  end
 
 end

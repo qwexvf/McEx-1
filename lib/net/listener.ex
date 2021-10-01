@@ -16,5 +16,4 @@ defmodule McEx.Net.Listener do
     :ok = :gen_tcp.controlling_process(socket, pid)
     accept_loop(listen)
   end
-
 end

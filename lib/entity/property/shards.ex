@@ -36,7 +36,6 @@ defmodule McEx.Entity.Property.Shards do
     state
   end
 
-
   @doc """
   Handles a movement of the current entity.
 
