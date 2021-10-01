@@ -33,6 +33,7 @@ defmodule McEx.World.Shard do
     :ok = GenServer.call(shard_pid, {:stop_membership, self})
   end
 
+  # sends player pos
   def broadcast(world_id, pos, event_id, eid \\ nil, value) do
     message = {:entity_msg, :shard_broadcast, {pos, eid, event_id, value}}
     McEx.Registry.shard_listener_send(world_id, pos, message)
@@ -96,5 +97,4 @@ defmodule McEx.World.Shard do
     state = %{state | membership: membership}
     {:noreply, state}
   end
-
 end

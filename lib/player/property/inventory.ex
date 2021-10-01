@@ -21,7 +21,7 @@ defmodule McEx.Player.Property.Inventory do
   end
 
   def handle_client_packet(%Client.Play.HeldItemSlot{} = msg, state) do
-    prop = %{get_prop(state) | held_slot: msg.slot}
+    prop = %{get_prop(state) | held_slot: msg.slot_id}
     set_prop(state, prop)
   end
 

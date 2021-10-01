@@ -1,4 +1,5 @@
 defmodule McEx.Registry do
+  require IEx
 
   # World service
   def world_service_key(world_id, ident), do:
@@ -52,14 +53,16 @@ defmodule McEx.Registry do
   :gproc.lookup_pid(chunk_server_key(world_id, pos))
 
   # Chunk listeners
-  def chunk_listener_key(world_id, pos), do:
-  {:n, :l, {:chunk_listener, world_id, pos}}
+  def chunk_listener_key(world_id, pos) do
+    {:n, :l, {:chunk_listener, world_id, pos}}
+  end
 
-  def reg_chunk_listener(world_id, pos), do:
-  :gproc.reg(chunk_listener_key(world_id, pos))
+  def reg_chunk_listener(world_id, pos) do
+    :gproc.reg_or_locate(chunk_listener_key(world_id, pos))
+  end
 
   def unreg_chunk_listener(world_id, pos), do:
-  :gproc.unreg(chunk_listener_key(world_id, pos))
+  :gproc.unregister_name(chunk_listener_key(world_id, pos))
 
   def chunk_listeners_send(world_id, pos, message), do:
   :gproc.send(chunk_listener_key(world_id, pos), message)
@@ -101,8 +104,17 @@ defmodule McEx.Registry do
   def reg_shard_member(world_id, pos), do:
   :gproc.reg(shard_member_key(world_id, pos))
 
-  def unreg_shard_member(world_id, pos), do:
-  :gproc.unreg(shard_member_key(world_id, pos))
+  def unreg_shard_member(world_id, pos) do
+    case :gproc.lookup_pids(shard_member_key(world_id, pos)) do
+      nil ->
+        :noop
+      pids ->
+        Enum.each(pids, fn pid ->
+          IO.inspect pid
+          Process.exit(pid, :normal)
+        end)
+    end
+  end
 
   def shard_member_send(world_id, pos, message), do:
   :gproc.send(shard_member_key(world_id, pos), message)

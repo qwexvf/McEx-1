@@ -15,14 +15,11 @@ defmodule McEx.Entity.Message.Move do
       on_ground: on_ground,
     }
   end
-
 end
 
 defimpl McEx.Entity.Message, for: McEx.Entity.Message.Move do
-
   def broadcast_for_entity(message, entity_state) do
     entity_state = McEx.Entity.Property.prop_broadcast(entity_state, message)
     McEx.Entity.Property.Shards.broadcast_shard(entity_state, :broadcast, message)
   end
-
 end

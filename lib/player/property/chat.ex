@@ -8,10 +8,16 @@ defmodule McEx.Player.Property.Chat do
   end
 
   def handle_client_packet(%Client.Play.Chat{} = msg, state) do
-    msg = {:entity_msg, :world_event,
+    updated_msg = {:entity_msg, :world_event,
            {:player_chat_message, {state.identity, msg.message}}}
     # TODO: Transmit world events on a separate channel?
-    McEx.Registry.world_players_send(state.world_id, msg)
+    cond do
+      msg.message == "x" ->
+        IO.inspect "aa"
+      true ->
+        McEx.Registry.world_players_send(state.world_id, updated_msg)
+    end
+
     state
   end
 
@@ -22,7 +28,8 @@ defmodule McEx.Player.Property.Chat do
 
     %Server.Play.Chat{
       position: 0,
-      message: Jason.encode!(chat_message)}
+      message: Jason.encode!(chat_message)
+    }
     |> write_client_packet(state)
 
     state

@@ -40,7 +40,7 @@ defmodule McEx.Net.HandlerClauses do
        }},
     ]
 
-    # TODO: Chunks need to sent after JoinGame, and this should be before. Make this work properly with a world system.
+    # TODO: Chunks need to be sent after JoinGame, and this should be before. Make this work properly with a world system.
     {:ok, player_server} = McEx.World.EntitySupervisor.start_entity(
       world_id, McEx.Player,
       %{
@@ -51,15 +51,17 @@ defmodule McEx.Net.HandlerClauses do
     )
 
     # TODO: Handle player server crash
-    #GenServer.call(state.protocol_state.connection.control, {:die_with, player_server})
+    # GenServer.call(state.protocol_state.connection.control, {:die_with, player_server})
 
     state =
       %{state |
          player: player_server,
          entity_id: entity_id,
-       }
+      }
+
+    IO.puts "asdfasdfsdafsdf"
+    IO.inspect state
 
     {transitions, state}
   end
-
 end
