@@ -44,7 +44,6 @@ defmodule McEx.Player.Property.Inventory do
 
   # When not handling a case, disapprove.
   def handle_inventory_click(packet, state) do
-    IO.inspect packet
     %Server.Play.Transaction{
       window_id: 0,
       action: packet.action,

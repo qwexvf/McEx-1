@@ -35,7 +35,6 @@ defmodule McEx.World.Shard do
 
   # sends player pos
   def broadcast(world_id, pos, event_id, eid \\ nil, value) do
-    IO.puts "sdafkjsdkl;fjsda;lkfj" 
     message = {:entity_msg, :shard_broadcast, {pos, eid, event_id, value}}
     McEx.Registry.shard_listener_send(world_id, pos, message)
   end
@@ -65,10 +64,13 @@ defmodule McEx.World.Shard do
 
   def handle_call({:stop_listen, process}, _from, state) do
     # TODO: Stop the shard if empty?
-    {:ok, membership, _} = MembershipManager.leave(state.membership, :listeners,
-                                                   process)
-    state = %{state | membership: membership}
-    {:reply, :ok, state}
+    case MembershipManager.leave(state.membership, :listeners, process) do
+      {:ok, membership, _} ->
+        state = %{state | membership: membership}
+        {:reply, :ok, state}
+      :not_member -> 
+        {:reply, :ok, state}
+    end
   end
 
   def handle_call({:start_membership, process, eid}, _from, state) do
@@ -91,7 +93,6 @@ defmodule McEx.World.Shard do
 
   def handle_call(e, _from, state) do
     # TODO: Send catchup messages
-    IO.inspect e
     {:reply, :ok, state}
   end
 

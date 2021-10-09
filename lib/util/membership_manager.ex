@@ -1,5 +1,4 @@
 defmodule McEx.Util.MembershipManager do
-
   defstruct groups_members: %{}, monitors: %{}
 
   def init(groups) do
@@ -23,8 +22,12 @@ defmodule McEx.Util.MembershipManager do
     end
   end
   def join!(state, group, pid, member_state \\ nil) do
-    {:ok, state} = join(state, group, pid, member_state)
-    state
+    case join(state, group, pid, member_state) do
+      {:ok, state} ->
+        state
+      :already_member ->
+        state
+    end
   end
 
   def leave(%__MODULE__{} = state, group, pid) do

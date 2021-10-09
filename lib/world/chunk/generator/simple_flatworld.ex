@@ -1,5 +1,4 @@
 defmodule McEx.World.Chunk.Generator.SimpleFlatworld do
-
   alias McChunk.Chunk
 
   @behaviour McEx.World.Chunk.Generator

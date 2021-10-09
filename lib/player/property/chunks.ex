@@ -33,6 +33,8 @@ defmodule McEx.Player.Property.Chunks do
     McEx.Registry.reg_chunk_listener(state.world_id, chunk_pos)
     McEx.Chunk.Manager.lock_chunk(chunk_manager, chunk_pos, self)
     {:ok, chunk} = McEx.Chunk.Manager.get_chunk(chunk_manager, chunk_pos)
+    IO.puts "myasshole"
+    IO.inspect chunk
     McEx.Chunk.send_chunk(chunk, state.connection)
   end
 

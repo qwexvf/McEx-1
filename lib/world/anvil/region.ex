@@ -18,7 +18,6 @@ defmodule McEx.World.Anvil.Region do
     {:ok, locations} = :file.pread(device, 0, 4096)
 
     chunk_map = chunk_map_from_header(locations, :array.new(1024, default: nil, fixed: true))
-    IO.inspect(:array.to_list(chunk_map), limit: 10000)
 
     {:ok, %State{
       device: device,
@@ -29,7 +28,6 @@ defmodule McEx.World.Anvil.Region do
   end
 
   def handle_call({:read_chunk, pos={_x, _z}}, _from, state) do
-    IO.inspect read_chunk(state, pos)
     {:reply, 0, state}
   end
 
@@ -71,5 +69,4 @@ defmodule McEx.World.Anvil.Region do
     end
     chunk_map_from_header(rest, num+1, arr)
   end
-
 end

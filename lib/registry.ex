@@ -88,37 +88,52 @@ defmodule McEx.Registry do
   def shard_listener_key(world_id, pos), do:
   {:p, :l, {:shard_listeners, world_id, pos}}
 
-  def reg_shard_listener(world_id, pos), do:
-  :gproc.reg(shard_listener_key(world_id, pos))
+  def reg_shard_listener(world_id, pos) do
+    key = shard_listener_key(world_id, pos)
 
-  def unreg_shard_listener(world_id, pos), do:
-  :gproc.unreg(shard_listener_key(world_id, pos))
+    unless check_shard_key(key) do
+      :gproc.reg(key)
+    end
+  end
+
+  def unreg_shard_listener(world_id, pos) do
+    key = shard_listener_key(world_id, pos)
+
+    unless check_shard_key(key) do
+      :gproc.unreg(shard_listener_key(world_id, pos))
+    end
+  end
 
   def shard_listener_send(world_id, pos, message), do:
   :gproc.send(shard_listener_key(world_id, pos), message)
 
   # Shard membership
   def shard_member_key(world_id, pos), do:
-  {:p, :l, {:shard_members, world_id, pos}}
+    {:p, :l, {:shard_members, world_id, pos}}
 
-  def reg_shard_member(world_id, pos), do:
-  :gproc.reg(shard_member_key(world_id, pos))
+  def check_shard_key(key) do
+    key
+    |> :gproc.lookup_pids()
+    |> Enum.any?()
+  end
+
+  def reg_shard_member(world_id, pos) do
+    key = shard_member_key(world_id, pos)
+    
+    unless check_shard_key(key) do
+      :gproc.reg(key)
+    end
+  end
 
   def unreg_shard_member(world_id, pos) do
-    case :gproc.lookup_pids(shard_member_key(world_id, pos)) do
-      nil ->
-        :noop
-      pids ->
-        Enum.each(pids, fn pid ->
-          IO.inspect pid
-          # Process.exit(pid, :normal)
-        end)
+    key = shard_member_key(world_id, pos)
+    
+    if check_shard_key(key) do
+      :gproc.unreg(key)
     end
   end
 
   def shard_member_send(world_id, pos, message) do
-    IO.inspect shard_member_key(world_id, pos)
     :gproc.send(shard_member_key(world_id, pos), message)
   end
-
 end

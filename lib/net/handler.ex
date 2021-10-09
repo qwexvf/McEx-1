@@ -22,10 +22,11 @@ defmodule McEx.Net.Handler do
 
   # GenServer
   def init(_stash) do
-    state =  %{
+    state = %{
       player: nil,
-      entity_id: nil,
+      entity_id: nil
     }
+
     {:ok, state}
   end
 
@@ -34,23 +35,25 @@ defmodule McEx.Net.Handler do
     {:reply, transitions, state}
   end
 
-  def handle_call({:handle, packet_data, _stash}, _from,  state) do
+  def handle_call({:handle, packet_data, _stash}, _from, state) do
     packet_data =
       packet_data
-      |> McProtocol.Packet.In.fetch_packet
+      |> McProtocol.Packet.In.fetch_packet()
+      |> IO.inspect()
 
     unless [
-        McProtocol.Packet.Client.Play.Settings,
-        McProtocol.Packet.Client.Play.TeleportConfirm,
-        McProtocol.Packet.Client.Play.KeepAlive,
-        McProtocol.Packet.Client.Play.PositionLook,
-        McProtocol.Packet.Client.Play.Position,
-        McProtocol.Packet.Client.Play.Look,
-        McProtocol.Packet.Client.Play.Abilities,
-        McProtocol.Packet.Client.Play.EntityAction,
-        # McProtocol.Packet.Client.Play.CustomPayload,
-      ] |> Enum.member?(packet_data.module),
-    do: Logger.debug inspect packet_data.packet
+             McProtocol.Packet.Client.Play.Settings,
+             McProtocol.Packet.Client.Play.TeleportConfirm,
+             McProtocol.Packet.Client.Play.KeepAlive,
+             McProtocol.Packet.Client.Play.PositionLook,
+             McProtocol.Packet.Client.Play.Position,
+             McProtocol.Packet.Client.Play.Look,
+             McProtocol.Packet.Client.Play.Abilities,
+             McProtocol.Packet.Client.Play.EntityAction
+             # McProtocol.Packet.Client.Play.CustomPayload,
+           ]
+           |> Enum.member?(packet_data.module),
+           do: Logger.debug(inspect(packet_data.packet))
 
     McEx.Player.client_packet(state.player, packet_data.packet)
     {:reply, [], state}

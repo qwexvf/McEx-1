@@ -17,8 +17,7 @@ defmodule McEx.Entity.Property.Shards do
 
   defp calc_pos_shard(pos) do
     {:chunk, cx, cz} = Pos.to_chunk(pos)
-    {Math.floor(cx / @shard_size) * @shard_size,
-     Math.floor(cz / @shard_size) * @shard_size,}
+    {Math.floor(cx / @shard_size) * @shard_size, Math.floor(cz / @shard_size) * @shard_size}
   end
 
   def initial(_args, state) do
@@ -27,9 +26,10 @@ defmodule McEx.Entity.Property.Shards do
 
     prop = %{
       current_shard: nil,
-      shards: MapSet.new,
-      view_distance: Application.get_env(:mc_ex, :view_distance, 8),
+      shards: MapSet.new(),
+      view_distance: Application.get_env(:mc_ex, :view_distance, 8)
     }
+
     state = set_prop(state, prop)
     state = join_leave_shards(state)
 
@@ -58,43 +58,52 @@ defmodule McEx.Entity.Property.Shards do
     new_shard = calc_pos_shard(pos)
 
     # If we switched shards, move over to the new shard
-    state = if current_shard != new_shard do
-      Logger.debug("Entity #{state.eid} moving from shard #{inspect current_shard} to #{inspect new_shard}")
+    state =
+      if current_shard != new_shard do
+        Logger.debug(
+          "Entity #{state.eid} moving from shard #{inspect(current_shard)} to #{inspect(new_shard)}"
+        )
 
-      # If we just spawned, there will be no shard to leave.
-      if current_shard != nil do
-        McEx.World.Shard.stop_membership(state.world_id, current_shard, new_shard)
+        # If we just spawned, there will be no shard to leave.
+        if current_shard != nil do
+          McEx.World.Shard.stop_membership(state.world_id, current_shard, new_shard)
+        end
+
+        McEx.World.Shard.Manager.ensure_shard_started(state.world_id, new_shard)
+        McEx.World.Shard.start_membership(state.world_id, new_shard, state.eid, current_shard)
+        state = set_prop(state, %{get_prop(state) | current_shard: new_shard})
+
+        # This collects initial entity state from various properties and
+        # broadcasts it to the current shard.
+        # TODO: I don't think this makes sense to have in here, what property
+        # would we put it in?
+        {collected, state} = collect_spawn_data(state)
+        state = broadcast_shard(state, :entity_enter, collected)
+
+        state
+      else
+        state
       end
-      McEx.World.Shard.Manager.ensure_shard_started(state.world_id, new_shard)
-      McEx.World.Shard.start_membership(state.world_id, new_shard, state.eid,
-                                        current_shard)
-      state = set_prop(state, %{get_prop(state) | current_shard: new_shard})
-
-      # This collects initial entity state from various properties and
-      # broadcasts it to the current shard.
-      # TODO: I don't think this makes sense to have in here, what property
-      # would we put it in?
-      {collected, state} = collect_spawn_data(state)
-      state = broadcast_shard(state, :entity_enter, collected)
-
-      state
-    else
-      state
-    end
 
     join_fun = fn shard_pos ->
       McEx.World.Shard.Manager.ensure_shard_started(state.world_id, shard_pos)
       McEx.World.Shard.start_listen(state.world_id, shard_pos)
-      McEx.World.Shard.broadcast_members(state.world_id, shard_pos,
-                                         :entity_catchup, state.eid, self)
+
+      McEx.World.Shard.broadcast_members(
+        state.world_id,
+        shard_pos,
+        :entity_catchup,
+        state.eid,
+        self
+      )
     end
+
     leave_fun = fn shard_pos ->
       McEx.World.Shard.stop_listen(state.world_id, shard_pos)
     end
 
     prop = get_prop(state)
-    shards = transition_shards(pos, prop.view_distance, prop.shards,
-                               join_fun, leave_fun)
+    shards = transition_shards(pos, prop.view_distance, prop.shards, join_fun, leave_fun)
     set_prop(state, %{prop | shards: shards})
   end
 
@@ -110,7 +119,7 @@ defmodule McEx.Entity.Property.Shards do
     shard_radius = Math.ceil(chunk_radius / @shard_size)
 
     for x <- (shard_x - shard_radius)..(shard_x + shard_radius),
-    z <- (shard_z - shard_radius)..(shard_z + shard_radius) do
+        z <- (shard_z - shard_radius)..(shard_z + shard_radius) do
       {x * @shard_size, z * @shard_size}
     end
   end
@@ -122,12 +131,12 @@ defmodule McEx.Entity.Property.Shards do
     # Join
     Enum.reduce(shards_join, shards_in, fn
       element, loaded ->
-      if MapSet.member?(loaded, element) do
-        loaded
-      else
-        join_fun.(element)
-        MapSet.put(loaded, element)
-      end
+        if MapSet.member?(loaded, element) do
+          loaded
+        else
+          join_fun.(element)
+          MapSet.put(loaded, element)
+        end
     end)
 
     # Leave
@@ -139,19 +148,19 @@ defmodule McEx.Entity.Property.Shards do
         false
       end
     end)
-    |> Enum.into(MapSet.new)
+    |> Enum.into(MapSet.new())
   end
 
   @doc """
   Handles the entity catchup request. Sent by join_leave_shards/1.
   """
-  def handle_shard_member_broadcast(pos, :entity_catchup, eid, requester,
-                                    state = %{eid: c_eid}) when eid != c_eid do
+  def handle_shard_member_broadcast(pos, :entity_catchup, eid, requester, state = %{eid: c_eid})
+      when eid != c_eid do
     # TODO: I don't think this makes sense to have in here, what property
     # would we put it in?
     {collected, state} = collect_spawn_data(state)
     message = {:entity_msg, :info_message, {:catchup_response, collected}}
-    send requester, message
+    send(requester, message)
 
     state
   end
@@ -173,17 +182,24 @@ defmodule McEx.Entity.Property.Shards do
   """
   def broadcast_shard(state, event_id, value) do
     prop = get_prop(state)
-    McEx.World.Shard.broadcast(state.world_id, prop.current_shard,
-                               event_id, state.eid, value)
+    McEx.World.Shard.broadcast(state.world_id, prop.current_shard, event_id, state.eid, value)
     state
   end
+
   @doc """
   Broadcasts a message to the members of our current shard.
   """
   def broadcast_shard_members(state, event_id, value) do
     prop = get_prop(state)
-    McEx.World.Shard.broadcast_members(state.world_id, prop.current_shard,
-                                       event_id, state.eid, value)
+
+    McEx.World.Shard.broadcast_members(
+      state.world_id,
+      prop.current_shard,
+      event_id,
+      state.eid,
+      value
+    )
+
     state
   end
 
@@ -191,5 +207,4 @@ defmodule McEx.Entity.Property.Shards do
     prop = get_prop(state)
     prop.current_shard
   end
-
 end

@@ -59,9 +59,6 @@ defmodule McEx.Net.HandlerClauses do
          entity_id: entity_id,
       }
 
-    IO.puts "asdfasdfsdafsdf"
-    IO.inspect state
-
     {transitions, state}
   end
 end
